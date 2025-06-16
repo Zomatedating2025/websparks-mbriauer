@@ -159,7 +159,7 @@ const ZodiChat: React.FC = () => {
                     : 'bg-card-gradient text-galactic-white border border-galactic-purple/30'
                 }`}
               >
-                <p className="font-body text-sm">{message.text}</p>
+                <p className="font-body text-sm leading-relaxed">{message.text}</p>
                 <p className="text-xs opacity-60 mt-1">
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>

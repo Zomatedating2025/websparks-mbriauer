@@ -205,7 +205,7 @@ const EditProfile: React.FC = () => {
                   <textarea
                     {...register('bio', { 
                       required: 'Bio is required', 
-                      minLength: { value: 50, message: 'Bio must be at least 50 characters' },
+                      minLength: { value: 20, message: 'Bio must be at least 20 characters' },
                       maxLength: { value: 500, message: 'Bio must be less than 500 characters' }
                     })}
                     className="w-full bg-cosmic-card border border-galactic-purple/30 rounded-lg px-4 py-3 text-galactic-white focus:border-galactic-purple focus:outline-none h-32 resize-none"

@@ -115,7 +115,7 @@ const OnboardingFlow: React.FC = () => {
       case 3: // Interests (optional)
         return true; // Always can proceed since interests are optional
       case 4: // Bio
-        return watch('bio') && watch('bio').length >= 50;
+        return watch('bio') && watch('bio').length >= 20;
       case 5: // Photos
         return photos.length >= 3;
       default:
@@ -247,7 +247,7 @@ const OnboardingFlow: React.FC = () => {
           <textarea
             {...register('bio', { 
               required: 'Bio is required', 
-              minLength: { value: 50, message: 'Bio must be at least 50 characters' },
+              minLength: { value: 20, message: 'Bio must be at least 20 characters' },
               maxLength: { value: 500, message: 'Bio must be less than 500 characters' }
             })}
             className="w-full bg-cosmic-card border border-galactic-purple/30 rounded-lg px-4 py-3 text-galactic-white focus:border-galactic-purple focus:outline-none h-32 resize-none"
