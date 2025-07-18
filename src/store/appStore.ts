@@ -13,6 +13,7 @@ export interface User {
   interests?: string[];
   occupation?: string;
   isOnline?: boolean;
+  distance?: number;
 }
 
 interface Match {
@@ -52,15 +53,6 @@ interface Purchase {
   expiresAt?: Date;
 }
 
-interface CosmicConnection {
-  id: string;
-  user: User;
-  connectedAt: Date;
-  compatibilityScore: number;
-  lastMessage?: Message;
-  unread: number;
-}
-
 interface AppState {
   currentUser: User | null;
   isOnboarded: boolean;
@@ -68,7 +60,6 @@ interface AppState {
   matches: Match[];
   conversations: { [conversationId: string]: Conversation };
   messages: { [conversationId: string]: Message[] };
-  cosmicConnections: CosmicConnection[];
   purchases: Purchase[];
   dailyZodiMessages: number;
   dailyUndos: number;
@@ -96,7 +87,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   matches: [],
   conversations: {},
   messages: {},
-  cosmicConnections: [],
   purchases: [],
   dailyZodiMessages: 0,
   dailyUndos: 0,
@@ -108,7 +98,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   addMatch: (match) => {
     set((state) => {
-      // Create a conversation for the new match
       const conversationId = `${state.currentUser?.id}_${match.user.id}`;
       const newConversation: Conversation = {
         id: conversationId,
@@ -137,7 +126,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       const currentMessages = state.messages[conversationId] || [];
       const updatedMessages = [...currentMessages, message];
       
-      // Update conversation
       const conversation = state.conversations[conversationId];
       if (conversation) {
         const updatedConversation = {
@@ -224,7 +212,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   addPurchase: (purchase) => {
     set((state) => {
-      // If it's a Premium subscription, activate Premium
       if (purchase.itemId.includes('premium')) {
         return {
           purchases: [...state.purchases, purchase],
@@ -244,7 +231,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     
     if (!purchase) return false;
     
-    // Check if purchase is still valid
     if (purchase.expiresAt && new Date() > purchase.expiresAt) {
       return false;
     }
@@ -262,12 +248,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     const state = get();
     const today = new Date().toDateString();
     
-    // Reset daily undos if it's a new day
     if (state.lastUndoReset !== today) {
       set({ dailyUndos: 0, lastUndoReset: today });
     }
     
-    // Check if user has undos available (Premium gets unlimited)
     if (state.isPremium || state.dailyUndos < 3) {
       set((state) => ({ 
         dailyUndos: state.isPremium ? state.dailyUndos : state.dailyUndos + 1 
@@ -282,7 +266,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     const state = get();
     const today = new Date().toDateString();
     
-    // Reset daily undos if it's a new day
     if (state.lastUndoReset !== today) {
       return 3;
     }

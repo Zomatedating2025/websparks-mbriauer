@@ -1,152 +1,189 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { colors } from '../styles/colors';
+import { MILLENNIAL_GENZ_INTERESTS } from '../data/interests';
 
 interface InterestsSelectorProps {
   selectedInterests: string[];
   onInterestsChange: (interests: string[]) => void;
   maxInterests?: number;
-  required?: boolean;
 }
 
-const InterestsSelector: React.FC<InterestsSelectorProps> = ({
-  selectedInterests,
-  onInterestsChange,
-  maxInterests = 3,
-  required = false
-}) => {
-  const availableInterests = [
-    // Spiritual & Mystical
-    'Astrology', 'Meditation', 'Crystals', 'Tarot', 'Spirituality', 'Moon Phases',
-    'Chakras', 'Energy Healing', 'Manifestation', 'Sacred Geometry',
-    
-    // Creative & Artistic
-    'Photography', 'Art', 'Music', 'Dancing', 'Writing', 'Poetry',
-    'Painting', 'Crafting', 'Design', 'Theater',
-    
-    // Active & Outdoorsy
-    'Yoga', 'Hiking', 'Surfing', 'Rock Climbing', 'Running', 'Cycling',
-    'Swimming', 'Beach Volleyball', 'Skiing', 'Camping',
-    
-    // Intellectual & Learning
-    'Reading', 'Philosophy', 'Psychology', 'Science', 'History',
-    'Languages', 'Podcasts', 'Documentaries', 'Learning', 'Research',
-    
-    // Social & Cultural
-    'Travel', 'Cooking', 'Wine Tasting', 'Coffee', 'Festivals',
-    'Concerts', 'Museums', 'Theater', 'Volunteering', 'Community',
-    
-    // Wellness & Health
-    'Fitness', 'Nutrition', 'Mindfulness', 'Wellness', 'Self-Care',
-    'Mental Health', 'Holistic Health', 'Aromatherapy', 'Massage', 'Spa',
-    
-    // Technology & Innovation
-    'Tech', 'Gaming', 'AI', 'Startups', 'Innovation', 'Coding',
-    'Digital Art', 'VR', 'Blockchain', 'Social Impact',
-    
-    // Nature & Environment
-    'Gardening', 'Sustainability', 'Environment', 'Animals', 'Plants',
-    'Conservation', 'Organic Living', 'Permaculture', 'Ecology', 'Climate'
-  ];
-
+export default function InterestsSelector({ 
+  selectedInterests, 
+  onInterestsChange, 
+  maxInterests = 5 
+}: InterestsSelectorProps) {
+  
   const handleInterestToggle = (interest: string) => {
     if (selectedInterests.includes(interest)) {
-      // Remove interest
       onInterestsChange(selectedInterests.filter(i => i !== interest));
     } else if (selectedInterests.length < maxInterests) {
-      // Add interest
       onInterestsChange([...selectedInterests, interest]);
     }
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="text-center">
-        <h3 className="text-lg font-heading text-galactic-white mb-2">
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>
           What sparks your cosmic curiosity?
-        </h3>
-        <p className="text-galactic-white/70 font-body text-sm">
-          {required && selectedInterests.length === 0 && (
-            <span className="text-galactic-gold">Select your interests to help us find better matches. </span>
-          )}
+        </Text>
+        <Text style={styles.subText}>
           Choose up to {maxInterests} interests that define your cosmic journey.
-        </p>
-        <p className="text-galactic-white/50 font-body text-xs mt-1">
-          {required ? 'Required' : 'Optional'} - You can always change these later
-        </p>
-      </div>
-
-      {/* Selected Count */}
-      <div className="flex justify-center">
-        <div className="bg-cosmic-card rounded-full px-4 py-2">
-          <span className="text-galactic-white font-body text-sm">
+        </Text>
+        <View style={styles.countContainer}>
+          <Text style={styles.countText}>
             {selectedInterests.length} / {maxInterests} selected
-          </span>
-        </div>
-      </div>
+          </Text>
+        </View>
+      </View>
 
-      {/* Interests Grid */}
-      <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto">
-        {availableInterests.map((interest, index) => {
-          const isSelected = selectedInterests.includes(interest);
-          const canSelect = selectedInterests.length < maxInterests || isSelected;
-          
-          return (
-            <motion.button
-              key={interest}
-              className={`p-3 rounded-lg border transition-all duration-300 text-left ${
-                isSelected
-                  ? 'border-galactic-gold bg-galactic-gold/20 text-galactic-white'
-                  : canSelect
-                    ? 'border-galactic-purple/30 bg-cosmic-card hover:border-galactic-purple hover:bg-galactic-purple/10 text-galactic-white/80'
-                    : 'border-galactic-white/10 bg-cosmic-card/30 text-galactic-white/30 cursor-not-allowed'
-              }`}
-              onClick={() => canSelect && handleInterestToggle(interest)}
-              disabled={!canSelect}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.02 }}
-              whileHover={canSelect ? { scale: 1.02 } : {}}
-              whileTap={canSelect ? { scale: 0.98 } : {}}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-body text-sm">{interest}</span>
-                {isSelected && (
-                  <i className="bi bi-check-circle-fill text-galactic-gold"></i>
-                )}
-              </div>
-            </motion.button>
-          );
-        })}
-      </div>
-
-      {/* Selected Interests Preview */}
-      {selectedInterests.length > 0 && (
-        <div className="bg-galactic-purple/20 rounded-lg p-4">
-          <h4 className="text-galactic-white font-heading text-sm mb-2">Your Selected Interests:</h4>
-          <div className="flex flex-wrap gap-2">
-            {selectedInterests.map((interest) => (
-              <span
+      <ScrollView style={styles.interestsContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.interestsGrid}>
+          {MILLENNIAL_GENZ_INTERESTS.map((interest) => {
+            const isSelected = selectedInterests.includes(interest);
+            const canSelect = selectedInterests.length < maxInterests || isSelected;
+            
+            return (
+              <TouchableOpacity
                 key={interest}
-                className="bg-galactic-gold/20 text-galactic-gold px-2 py-1 rounded-full text-xs font-body"
+                style={[
+                  styles.interestButton,
+                  isSelected && styles.selectedInterest,
+                  !canSelect && styles.disabledInterest
+                ]}
+                onPress={() => canSelect && handleInterestToggle(interest)}
+                disabled={!canSelect}
               >
-                {interest}
-              </span>
+                <Text style={[
+                  styles.interestText,
+                  isSelected && styles.selectedInterestText,
+                  !canSelect && styles.disabledInterestText
+                ]}>
+                  {interest}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
+
+      {selectedInterests.length > 0 && (
+        <View style={styles.selectedContainer}>
+          <Text style={styles.selectedTitle}>Your Selected Interests:</Text>
+          <View style={styles.selectedGrid}>
+            {selectedInterests.map((interest) => (
+              <View key={interest} style={styles.selectedTag}>
+                <Text style={styles.selectedTagText}>{interest}</Text>
+              </View>
             ))}
-          </div>
-        </div>
+          </View>
+        </View>
       )}
-
-      {/* Skip Option */}
-      {!required && selectedInterests.length === 0 && (
-        <div className="text-center">
-          <p className="text-galactic-white/60 font-body text-sm">
-            You can skip this step and add interests later in your profile settings.
-          </p>
-        </div>
-      )}
-    </div>
+    </View>
   );
-};
+}
 
-export default InterestsSelector;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.galactic.white,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subText: {
+    fontSize: 14,
+    color: colors.galactic.white + '70',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  countContainer: {
+    backgroundColor: colors.cosmic.card,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  countText: {
+    fontSize: 14,
+    color: colors.galactic.white,
+    fontWeight: '500',
+  },
+  interestsContainer: {
+    flex: 1,
+    maxHeight: 300,
+  },
+  interestsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  interestButton: {
+    backgroundColor: colors.cosmic.card,
+    borderColor: colors.galactic.purple + '30',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 8,
+    minWidth: '48%',
+    alignItems: 'center',
+  },
+  selectedInterest: {
+    backgroundColor: colors.galactic.gold + '20',
+    borderColor: colors.galactic.gold,
+  },
+  disabledInterest: {
+    backgroundColor: colors.cosmic.card + '30',
+    borderColor: colors.galactic.white + '10',
+  },
+  interestText: {
+    fontSize: 14,
+    color: colors.galactic.white + '80',
+    textAlign: 'center',
+  },
+  selectedInterestText: {
+    color: colors.galactic.white,
+    fontWeight: '500',
+  },
+  disabledInterestText: {
+    color: colors.galactic.white + '30',
+  },
+  selectedContainer: {
+    backgroundColor: colors.galactic.purple + '20',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+  },
+  selectedTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.galactic.white,
+    marginBottom: 8,
+  },
+  selectedGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  selectedTag: {
+    backgroundColor: colors.galactic.gold + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  selectedTagText: {
+    fontSize: 12,
+    color: colors.galactic.gold,
+    fontWeight: '500',
+  },
+});

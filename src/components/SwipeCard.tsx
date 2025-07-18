@@ -1,245 +1,265 @@
 import React, { useState } from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { useGesture } from 'react-use-gesture';
-import { User } from '../store/appStore';
-import { useAppStore } from '../store/appStore';
-import { CompatibilityService } from '../services/compatibilityService';
-import CompatibilityMeter from './CompatibilityMeter';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { colors } from '../styles/colors';
+
+const { width: screenWidth } = Dimensions.get('window');
+const cardWidth = screenWidth - 40;
 
 interface SwipeCardProps {
-  user: User;
-  onSwipe: (direction: 'left' | 'right', user: User) => void;
-  isTop: boolean;
+  user: {
+    id: string;
+    name: string;
+    age: number;
+    sunSign: string;
+    bio: string;
+    photos: string[];
+    distance?: number;
+    interests?: string[];
+    isOnline?: boolean;
+  };
 }
 
-const SwipeCard: React.FC<SwipeCardProps> = ({ user, onSwipe, isTop }) => {
+export default function SwipeCard({ user }: SwipeCardProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [showCompatibility, setShowCompatibility] = useState(false);
-  const { currentUser } = useAppStore();
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-30, 30]);
-  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
 
-  const bind = useGesture({
-    onDrag: ({ offset, cancel }) => {
-      const ox = Array.isArray(offset) ? offset[0] : offset.x || 0;
-      const oy = Array.isArray(offset) ? offset[1] : offset.y || 0;
-      
-      x.set(ox);
-      y.set(oy);
-      
-      if (Math.abs(ox) > 100) {
-        cancel();
-        onSwipe(ox > 0 ? 'right' : 'left', user);
-      }
-    },
-  });
-
-  const zodiacEmoji = {
+  const zodiacEmojis = {
     'Aries': '♈', 'Taurus': '♉', 'Gemini': '♊', 'Cancer': '♋',
     'Leo': '♌', 'Virgo': '♍', 'Libra': '♎', 'Scorpio': '♏',
     'Sagittarius': '♐', 'Capricorn': '♑', 'Aquarius': '♒', 'Pisces': '♓'
   };
 
-  const handlePhotoTap = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const tapX = e.clientX - rect.left;
-    const cardWidth = rect.width;
-    
-    if (tapX > cardWidth / 2) {
-      // Tapped right side - next photo
-      if (currentPhotoIndex < user.photos.length - 1) {
-        setCurrentPhotoIndex(prev => prev + 1);
-      }
-    } else {
-      // Tapped left side - previous photo
-      if (currentPhotoIndex > 0) {
-        setCurrentPhotoIndex(prev => prev - 1);
-      }
+  const handlePhotoTap = (side: 'left' | 'right') => {
+    if (side === 'right' && currentPhotoIndex < user.photos.length - 1) {
+      setCurrentPhotoIndex(prev => prev + 1);
+    } else if (side === 'left' && currentPhotoIndex > 0) {
+      setCurrentPhotoIndex(prev => prev - 1);
     }
   };
 
-  // Calculate compatibility if both users exist
-  const compatibility = currentUser ? CompatibilityService.calculateCompatibility(currentUser, user) : null;
-
   return (
-    <motion.div
-      {...bind()}
-      style={{ x, y, rotate, opacity }}
-      className={`absolute w-80 h-[500px] bg-card-gradient rounded-2xl shadow-2xl cursor-grab active:cursor-grabbing overflow-hidden ${
-        isTop ? 'z-20' : 'z-10'
-      }`}
-      whileTap={{ cursor: 'grabbing' }}
-      drag
-      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-    >
+    <View style={styles.card}>
       {/* Photo Section */}
-      <div className="relative h-80 bg-gradient-to-br from-galactic-purple to-galactic-dark overflow-hidden">
-        <div 
-          className="w-full h-full cursor-pointer"
-          onClick={handlePhotoTap}
-        >
-          <img
-            src={user.photos[currentPhotoIndex] || `https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face`}
-            alt={`${user.name} photo ${currentPhotoIndex + 1}`}
-            className="w-full h-full object-cover"
-            crossOrigin="anonymous"
-          />
-        </div>
+      <View style={styles.photoContainer}>
+        <Image
+          source={{ uri: user.photos[currentPhotoIndex] }}
+          style={styles.photo}
+          resizeMode="cover"
+        />
         
+        {/* Photo Navigation */}
+        <View style={styles.photoNavigation}>
+          <TouchableOpacity 
+            style={styles.photoNavLeft}
+            onPress={() => handlePhotoTap('left')}
+          />
+          <TouchableOpacity 
+            style={styles.photoNavRight}
+            onPress={() => handlePhotoTap('right')}
+          />
+        </View>
+
         {/* Photo Indicators */}
         {user.photos.length > 1 && (
-          <div className="absolute top-4 left-4 right-4 flex space-x-1">
+          <View style={styles.photoIndicators}>
             {user.photos.map((_, index) => (
-              <div
+              <View
                 key={index}
-                className={`flex-1 h-1 rounded-full transition-all duration-300 ${
-                  index === currentPhotoIndex 
-                    ? 'bg-galactic-white' 
-                    : 'bg-galactic-white/30'
-                }`}
+                style={[
+                  styles.indicator,
+                  index === currentPhotoIndex && styles.activeIndicator
+                ]}
               />
             ))}
-          </div>
+          </View>
         )}
 
-        {/* Compatibility Button */}
-        {compatibility && (
-          <motion.button
-            className="absolute top-4 left-4 bg-cosmic-card/80 backdrop-blur-sm rounded-full p-2"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowCompatibility(!showCompatibility);
-            }}
-          >
-            <div className="flex items-center space-x-1">
-              <span className={`text-sm font-heading ${CompatibilityService.getCompatibilityColor(compatibility.overall)}`}>
-                {compatibility.overall}%
-              </span>
-              <i className="bi bi-stars text-galactic-gold text-xs"></i>
-            </div>
-          </motion.button>
-        )}
-
-        {/* Zodiac Sign Badge */}
-        <div className="absolute top-4 right-4 bg-galactic-purple/80 backdrop-blur-sm rounded-full px-3 py-1 flex items-center space-x-1">
-          <span className="text-lg">{zodiacEmoji[user.sunSign as keyof typeof zodiacEmoji]}</span>
-          <span className="text-sm font-heading text-galactic-white">{user.sunSign}</span>
-        </div>
+        {/* Zodiac Badge */}
+        <View style={styles.zodiacBadge}>
+          <Text style={styles.zodiacEmoji}>
+            {zodiacEmojis[user.sunSign as keyof typeof zodiacEmojis]}
+          </Text>
+          <Text style={styles.zodiacText}>{user.sunSign}</Text>
+        </View>
 
         {/* Distance */}
         {user.distance && (
-          <div className="absolute bottom-4 left-4 bg-cosmic-card/80 backdrop-blur-sm rounded-full px-3 py-1">
-            <span className="text-sm font-body text-galactic-white">{user.distance} km away</span>
-          </div>
+          <View style={styles.distanceBadge}>
+            <Text style={styles.distanceText}>{user.distance} km away</Text>
+          </View>
         )}
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-      </div>
+        {/* Online Status */}
+        {user.isOnline && (
+          <View style={styles.onlineIndicator} />
+        )}
+      </View>
 
-      {/* Profile Info Section */}
-      <div className="h-[220px] p-4 bg-cosmic-card">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h3 className="text-xl font-heading text-galactic-white">{user.name}, {user.age}</h3>
-            {user.occupation && (
-              <p className="text-sm text-galactic-lavender font-body">{user.occupation}</p>
-            )}
-          </div>
-          <div className="flex flex-col space-y-1">
-            {user.moonSign && (
-              <span className="text-xs bg-galactic-lavender/20 text-galactic-lavender px-2 py-1 rounded-full text-center">
-                🌙 {user.moonSign}
-              </span>
-            )}
-            {user.risingSign && (
-              <span className="text-xs bg-galactic-teal/20 text-galactic-teal px-2 py-1 rounded-full text-center">
-                ⬆️ {user.risingSign}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <p className="text-sm text-galactic-white/80 font-body line-clamp-3 mb-3 leading-relaxed">
+      {/* Info Section */}
+      <View style={styles.infoContainer}>
+        <View style={styles.nameContainer}>
+          <Text style={styles.name}>{user.name}, {user.age}</Text>
+        </View>
+        
+        <Text style={styles.bio} numberOfLines={3}>
           {user.bio}
-        </p>
+        </Text>
 
         {/* Interests */}
         {user.interests && user.interests.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {user.interests.slice(0, 4).map((interest, index) => (
-              <span
-                key={index}
-                className="text-xs bg-galactic-purple/30 text-galactic-white px-2 py-1 rounded-full font-body"
-              >
-                {interest}
-              </span>
+          <View style={styles.interestsContainer}>
+            {user.interests.slice(0, 3).map((interest, index) => (
+              <View key={index} style={styles.interestTag}>
+                <Text style={styles.interestText}>{interest}</Text>
+              </View>
             ))}
-            {user.interests.length > 4 && (
-              <span className="text-xs text-galactic-white/60 font-body">
-                +{user.interests.length - 4} more
-              </span>
+            {user.interests.length > 3 && (
+              <Text style={styles.moreInterests}>
+                +{user.interests.length - 3} more
+              </Text>
             )}
-          </div>
+          </View>
         )}
-      </div>
-
-      {/* Compatibility Overlay */}
-      {showCompatibility && compatibility && (
-        <motion.div
-          className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowCompatibility(false);
-          }}
-        >
-          <div className="bg-card-gradient rounded-2xl p-6 max-w-sm w-full">
-            <div className="text-center mb-4">
-              <h3 className="text-lg font-heading text-galactic-white mb-2">
-                Cosmic Compatibility
-              </h3>
-              <p className="text-galactic-white/70 font-body text-sm">
-                with {user.name}
-              </p>
-            </div>
-            
-            <CompatibilityMeter 
-              compatibility={compatibility} 
-              showDetails={true}
-              size="lg"
-            />
-          </div>
-        </motion.div>
-      )}
-
-      {/* Swipe Indicators */}
-      <motion.div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none"
-        style={{ opacity: useTransform(x, [50, 150], [0, 1]) }}
-      >
-        <div className="bg-green-500 text-white px-6 py-3 rounded-full font-bold text-lg transform rotate-12 shadow-lg">
-          LIKE
-        </div>
-      </motion.div>
-      
-      <motion.div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none"
-        style={{ opacity: useTransform(x, [-150, -50], [1, 0]) }}
-      >
-        <div className="bg-red-500 text-white px-6 py-3 rounded-full font-bold text-lg transform -rotate-12 shadow-lg">
-          PASS
-        </div>
-      </motion.div>
-    </motion.div>
+      </View>
+    </View>
   );
-};
+}
 
-export default SwipeCard;
+const styles = StyleSheet.create({
+  card: {
+    width: cardWidth,
+    height: 600,
+    backgroundColor: colors.cosmic.card,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  photoContainer: {
+    height: 400,
+    position: 'relative',
+  },
+  photo: {
+    width: '100%',
+    height: '100%',
+  },
+  photoNavigation: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+  },
+  photoNavLeft: {
+    flex: 1,
+  },
+  photoNavRight: {
+    flex: 1,
+  },
+  photoIndicators: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+  },
+  indicator: {
+    flex: 1,
+    height: 3,
+    backgroundColor: colors.galactic.white + '30',
+    marginHorizontal: 1,
+    borderRadius: 1.5,
+  },
+  activeIndicator: {
+    backgroundColor: colors.galactic.white,
+  },
+  zodiacBadge: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: colors.galactic.purple + '80',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  zodiacEmoji: {
+    fontSize: 16,
+    marginRight: 4,
+  },
+  zodiacText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.galactic.white,
+  },
+  distanceBadge: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    backgroundColor: colors.cosmic.card + '80',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+  },
+  distanceText: {
+    fontSize: 12,
+    color: colors.galactic.white,
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    width: 12,
+    height: 12,
+    backgroundColor: colors.galactic.teal,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.galactic.white,
+  },
+  infoContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  nameContainer: {
+    marginBottom: 8,
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.galactic.white,
+  },
+  bio: {
+    fontSize: 16,
+    color: colors.galactic.white + '80',
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  interestsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  interestTag: {
+    backgroundColor: colors.galactic.purple + '30',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  interestText: {
+    fontSize: 12,
+    color: colors.galactic.white,
+    fontWeight: '500',
+  },
+  moreInterests: {
+    fontSize: 12,
+    color: colors.galactic.white + '60',
+    fontStyle: 'italic',
+  },
+});
